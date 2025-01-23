@@ -1,12 +1,15 @@
 use std::fs;
 use std::path::Path;
 
+#[allow(unused_imports)]
 use pyo3::prelude::*;
 use toml::Value;
 
 use earth::{
-    bearing, CIRCUMFERENCE as EARTH_CIRCUMFERENCE, destination, great_circle_distance, haversine_distance,
-    RADIUS as EARTH_RADIUS, tunnel_distance, vincenty_distance, SEMI_MAJOR_AXIS as EARTH_SEMI_MAJOR_AXIS, SEMI_MINOR_AXIS as EARTH_SEMI_MINOR_AXIS, FLATTENING as EARTH_FLATTENING,
+    bearing, destination, great_circle_distance, haversine_distance, tunnel_distance,
+    vincenty_distance, CIRCUMFERENCE as EARTH_CIRCUMFERENCE, FLATTENING as EARTH_FLATTENING,
+    RADIUS as EARTH_RADIUS, SEMI_MAJOR_AXIS as EARTH_SEMI_MAJOR_AXIS,
+    SEMI_MINOR_AXIS as EARTH_SEMI_MINOR_AXIS,
 };
 
 mod earth;

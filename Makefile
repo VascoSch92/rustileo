@@ -14,8 +14,8 @@ help:
 	@echo " * init-test: install tests dependencies"
 	@echo " * fastbuild: Fast Build and Tests"
 	@echo " * lint: Formatting and checking for both Rust and Python"
-	@echo " * rust-lint: Formatting and checking for Rust"
-	@echo " * python-lint: Formatting and checking for Python"
+	@echo " * lint-rust: Formatting and checking for Rust"
+	@echo " * lint-python: Formatting and checking for Python"
 	@echo " * test: run tests"
 
 .PHONY: help Makefile
