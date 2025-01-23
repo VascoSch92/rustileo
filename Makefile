@@ -8,6 +8,10 @@ TESTSDIR        = tests
 # It is first such that "make" without argument is like "make help".
 help:
 	@echo "[HELP] Makefile commands:"
+	@echo " * init: initialize venv"
+	@echo " * init-dev: install dev dependencies"
+	@echo " * init-lint: install lint dependencies"
+	@echo " * init-test: install tests dependencies"
 	@echo " * fastbuild: Fast Build and Tests"
 	@echo " * format: Formatting and checking for both Rust and Python"
 	@echo " * ruformat: Formatting and checking for Rust"
@@ -15,6 +19,28 @@ help:
 	@echo " * test: run tests"
 
 .PHONY: help Makefile
+
+init:
+	@echo "[INFO] initialize venv"
+	@rm -rf .venv
+	@uv venv
+	@uv sync
+	@uv pip list
+
+init-dev:
+	@echo "[INFO] Install dev dependencies"
+	@uv sync --all-groups
+	@uv pip list
+
+init-lint:
+	@echo "[INFO] Install lint dependencies"
+	@uv sync --group lint
+	@uv pip list
+
+init-test:
+	@echo "[INFO] Install tests dependencies"
+	@uv sync --group test
+	@uv pip list
 
 fastbuild:
 	@echo "[INFO] Fast Build and Tests"

@@ -14,8 +14,15 @@ dynamic = ["version"]
 dependencies = [
     "maturin>=1.8.1",
     "pip>=24.3.1",
-    "pytest>=8.3.4",
-    "ruff>=0.9.2",
 ]
+
 [tool.maturin]
 features = ["pyo3/extension-module"]
+
+[dependency-groups]
+test = [
+    "pytest>=8.3.4",
+]
+lint = [
+    "ruff>=0.9.2",
+]
