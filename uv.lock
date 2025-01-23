@@ -126,17 +126,25 @@ source = { editable = "." }
 dependencies = [
     { name = "maturin" },
     { name = "pip" },
-    { name = "pytest" },
+]
+
+[package.dev-dependencies]
+lint = [
     { name = "ruff" },
+]
+test = [
+    { name = "pytest" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "maturin", specifier = ">=1.8.1" },
     { name = "pip", specifier = ">=24.3.1" },
-    { name = "pytest", specifier = ">=8.3.4" },
-    { name = "ruff", specifier = ">=0.9.2" },
 ]
+
+[package.metadata.requires-dev]
+lint = [{ name = "ruff", specifier = ">=0.9.2" }]
+test = [{ name = "pytest", specifier = ">=8.3.4" }]
 
 [[package]]
 name = "tomli"
