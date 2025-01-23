@@ -1,9 +1,10 @@
-import rustileo
-from pathlib import Path
 import re
+from pathlib import Path
+
+import rustileo
 
 
-def test_version():
+def test_version() -> None:
     assert rustileo.__version__ == _get_rustileo_version()
 
 
@@ -16,7 +17,7 @@ def _get_rustileo_version() -> str:
         raise FileNotFoundError("Cargo.toml not found.")
 
     # Read the contents of the file
-    with open(cargo_toml_path, "r", encoding="utf-8") as file:
+    with cargo_toml_path.open() as file:
         for line in file:
             match = re.match(r"^\s*version\s*=\s*[\"'](.+?)[\"']\s*$", line)
             if match:

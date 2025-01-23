@@ -26,3 +26,69 @@ test = [
 lint = [
     "ruff>=0.9.2",
 ]
+
+[tool.ruff]
+cache-dir = "tests/.cache/ruff"
+
+# Set of rules enabled
+lint.select = [
+    "ARG002", # Checks for the presence of unused arguments in instance method definitions
+    "ANN201", # Missing return type annotation for public function
+    "E", # Pycodestyle Error
+    "F", # Pyflakes
+    "B", # Flake8-bugbear
+    "W", # Pycodestyle Warning
+    "RET504", # Checks for variable assignments that immediately precede a return of the assigned variable.
+    "B023", # Checks for function definitions that use a loop variable
+    "D200", # One-line docstring should fit on one line
+    "D202", # No blank lines allowed after function docstring
+    "D211", # Checks for docstrings on class definitions that are preceded by a blank line.
+    "D300", # Use triple double quotes """
+    "D301", # Escape sequence in docstring
+    "D400", # Checks for docstrings in which the first line does not end in a period
+    "D401", # First line imperative mode
+    "D403", # Checks for docstrings that do not start with a capital letter.
+    "D404", # First word of the docstring should not be "This"
+    "D419", # Checks for empty docstrings.
+    "UP003", # Use {} instead of type(...)
+    "UP008", # Use super() instead of super(_class_, self)
+    "UP011", # Unnecessary parentheses to functools.lru_cache
+    "UP032", # Use f-string instead of format call
+    "C4", # flake8-comprehensions
+    "ICN", # flake8-import-conventions
+    "NPY", # NumPy-specific rules (NPY)
+    "ARG", # flake8-unused-arguments
+    "PLE0604", # Invalid object in __all__, must contain only strings
+    "PLE0605", # Invalid format for __all__, must be tuple or list
+    "PIE", # flake8-pie
+    "PTH", # flake8-use-pathlib
+    "Q000",
+    "LOG", # checks for impropriate use of logging
+    "Q002", # flake-8 double quotes for dosctring
+    "I001", # Import block is un-sorted or un-formatted
+]
+
+# Ignored rules
+lint.ignore = [
+    "C400", # Unnecessary generator (rewrite using list())
+    "F821", # Checks for uses of undefined names
+]
+
+lint.per-file-ignores = {"tests/*" = ["ANN201"]}
+
+# Set the max length of a line
+line-length = 121
+
+# The style in which the output message should be formatted
+output-format = "grouped"
+
+lint.flake8-quotes.inline-quotes = "double"
+lint.flake8-quotes.docstring-quotes = "double"
+lint.flake8-quotes.multiline-quotes = "double"
+
+lint.isort.combine-as-imports = true
+lint.isort.length-sort = true
+
+[tool.ruff.format]
+indent-style = "space"
+skip-magic-trailing-comma = false
