@@ -13,9 +13,9 @@ help:
 	@echo " * init-lint: install lint dependencies"
 	@echo " * init-test: install tests dependencies"
 	@echo " * fastbuild: Fast Build and Tests"
-	@echo " * format: Formatting and checking for both Rust and Python"
-	@echo " * ruformat: Formatting and checking for Rust"
-	@echo " * pyformat: Formatting and checking for Python"
+	@echo " * lint: Formatting and checking for both Rust and Python"
+	@echo " * rust-lint: Formatting and checking for Rust"
+	@echo " * python-lint: Formatting and checking for Python"
 	@echo " * test: run tests"
 
 .PHONY: help Makefile
@@ -55,17 +55,17 @@ fastbuild:
 	@echo "[INFO] Run test"
 	@uv run pytest .
 
-format:
+lint:
 	@echo "[INFO] Formatting and checking for both Rust and Python"
-	@make pyformat
-	@make ruformat
+	@make lint-python
+	@make lint-rust
 
-ruformat:
+lint-rust:
 	@echo "[INFO] Formatting and checking for Rust"
 	@cargo fmt
 	@cargo clippy
 
-pyformat:
+lint-python:
 	@echo "[INFO] Formatting and checking for Python"
 	@uv run ruff check . --fix
 	@uv run ruff format .
