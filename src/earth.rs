@@ -37,6 +37,15 @@ fn convert_degrees_to_radians(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> (f6
     (lat1, lon1, lat2, lon2)
 }
 
+fn are_antipodal(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> bool {
+    let lat_condition = lat1 == -lat2;
+
+    let lon_difference = (lon1 - lon2).abs();
+    let lon_condition = (lon_difference == 180.0) || (lon_difference == 0.0 && lat1.abs() == 90.0);
+
+    lat_condition && lon_condition
+}
+
 #[pyfunction]
 #[pyo3(signature = (lat1, lon1, lat2, lon2))]
 pub fn tunnel_distance(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> PyResult<f64> {
@@ -98,21 +107,20 @@ pub fn vincenty_distance(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> PyResult
     if let Err(msg) = validate_coordinate_pair(lat1, lon1, lat2, lon2) {
         return Err(PyValueError::new_err(msg));
     }
+    const CONVERGENCE_THRESHOLD: f64 = 1e-8;
+    if (lat1 - lat2).abs() < CONVERGENCE_THRESHOLD && (lon1 - lon2).abs() < CONVERGENCE_THRESHOLD {
+        return Ok(0.0);
+    }
+    if are_antipodal(lat1, lon1, lat2, lon2) {
+        return Ok(0.5 * CIRCUMFERENCE);
+    }
 
     // WGS-84 ellipsoidal constants
     const SEMI_MAJOR_AXIS_METER: f64 = SEMI_MAJOR_AXIS * 1000.0; // semi-major axis in meters
     const SEMI_MINOR_AXIS_METER: f64 = SEMI_MINOR_AXIS * 1000.0; // semi-minor axis in meters
     const MAX_ITERATIONS: i32 = 1_000;
-    const CONVERGENCE_THRESHOLD: f64 = 1e-8;
 
     let (phi1, lambda1, phi2, lambda2) = convert_degrees_to_radians(lat1, lon1, lat2, lon2);
-
-    // Check if points are the same
-    if (phi1 - phi2).abs() < CONVERGENCE_THRESHOLD
-        && (lambda1 - lambda2).abs() < CONVERGENCE_THRESHOLD
-    {
-        return Ok(0.0);
-    }
 
     let reduced_latitude1 = ((1.0 - FLATTENING) * phi1.tan()).atan();
     let reduced_latitude2 = ((1.0 - FLATTENING) * phi2.tan()).atan();
@@ -355,5 +363,22 @@ mod tests {
         // Test with a very small angle
         let (lat1, _, _, _) = convert_degrees_to_radians(0.0001, 0.0, 0.0, 0.0);
         assert!((lat1 - 1.7453292519943295e-6).abs() < EPSILON);
+    }
+
+    #[test]
+    fn test_antipodal_points() {
+        assert!(are_antipodal(90.0, 0.0, -90.0, 0.0));
+        assert!(are_antipodal(0.0, 0.0, 0.0, 180.0));
+        assert!(are_antipodal(45.0, 90.0, -45.0, -90.0));
+        assert!(are_antipodal(-30.0, 60.0, 30.0, -120.0));
+        assert!(are_antipodal(20.0, -50.0, -20.0, 130.0));
+        assert!(are_antipodal(-15.0, 10.0, 15.0, -170.0));
+    }
+
+    #[test]
+    fn test_non_antipodal_points() {
+        assert!(!are_antipodal(0.0, 0.0, 0.0, 0.0));
+        assert!(!are_antipodal(10.0, 10.0, 10.0, 10.0));
+        assert!(!are_antipodal(-41.12, 30.0, 23.0, -17.0));
     }
 }

@@ -122,6 +122,10 @@ def test_haversine_distance_exceptions(lat1, lon1, lat2, lon2, error, error_msg)
         # Antipodal points
         (90, 0, -90, 0, 0.05, 0.5 * earth.CIRCUMFERENCE),
         (0, 0, 0, 180, 0.05, 0.5 * earth.CIRCUMFERENCE),
+        # Quasi Antipodal points
+        (90, 0, -89, 0, 0.05, 0.5 * earth.CIRCUMFERENCE),
+        (89, 0, -90, 0, 0.05, 0.5 * earth.CIRCUMFERENCE),
+        (0, 1, 0, 180, 0.05, 0.5 * earth.CIRCUMFERENCE),
         # Well-known distances
         (40.7128, -74.0060, 51.5074, -0.1278, 0.05, 5585),
         (51.5074, -0.1278, 40.7128, -74.0060, 0.05, 5585),
@@ -208,7 +212,7 @@ def test_bearing_exceptions(lat1, lon1, lat2, lon2, error, error_msg):
         # destination north
         (0.0, 0.0, 111.195, 0.0, 0.05, 1, 0),
         # destination east
-        (0.0, 0.0, 111.195, 90.0, 0.05, 0, 1),
+        (0.0, 0.0, 111.195, 90.0, 1, 0, 1),
         # destination pole
         (89.0, 0.0, 111.195, 0.0, 0.05, 90, -180),
     ],
