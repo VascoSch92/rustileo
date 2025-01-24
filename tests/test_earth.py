@@ -79,9 +79,7 @@ def test_tunnel_distance_exceptions(lat1, lon1, lat2, lon2, error, error_msg):
         (34.0522, -118.2437, 35.6895, 139.6917, 0.05, 8815),
     ],
 )
-def test_haversine_and_great_circle_distance(
-    lat1, lon1, lat2, lon2, rel_tol, expected_value
-):
+def test_haversine_and_great_circle_distance(lat1, lon1, lat2, lon2, rel_tol, expected_value):
     computed_value_haversine = earth.haversine_distance(lat1, lon1, lat2, lon2)
     computed_value_great_circle = earth.great_circle_distance(lat1, lon1, lat2, lon2)
     msg = f"Expected: {expected_value}. Got {computed_value_haversine}"
@@ -220,9 +218,9 @@ def test_bearing_exceptions(lat1, lon1, lat2, lon2, error, error_msg):
 def test_destination(lat, lon, distance, bearing, rel_tol, expected_lat, expected_lon):
     computed_value = earth.destination(lat, lon, distance, bearing)
     msg = f"Expected: ({expected_lat}, {expected_lon}). Got {computed_value}"
-    if not math.isclose(
-        computed_value[0], expected_lat, rel_tol=rel_tol
-    ) or not math.isclose(computed_value[1], expected_lon, rel_tol=rel_tol):
+    if not math.isclose(computed_value[0], expected_lat, rel_tol=rel_tol) or not math.isclose(
+        computed_value[1], expected_lon, rel_tol=rel_tol
+    ):
         raise AssertionError(msg)
 
 
@@ -237,3 +235,22 @@ def test_destination(lat, lon, distance, bearing, rel_tol, expected_lat, expecte
 def test_destination_exceptions(lat, lon, distance, bearing, error, error_msg):
     with pytest.raises(error, match=error_msg):
         _ = earth.destination(lat, lon, distance, bearing)
+
+
+@pytest.mark.parametrize(
+    "lat1, lon1, lat2, lon2, expected",
+    [
+        (90.0, 0.0, -90.0, 0.0, True),
+        (0.0, 0.0, 0.0, 180.0, True),
+        (45.0, 90.0, -45.0, -90.0, True),
+        (-30.0, 60.0, 30.0, -120.0, True),
+        (20.0, -50.0, -20.0, 130.0, True),
+        (-15.0, 10.0, 15.0, -170.0, True),
+        (0.0, 0.0, 0.0, 0.0, False),
+        (10.0, 10.0, 10.0, 10.0, False),
+        (-41.12, 30.0, 23.0, -17.0, False),
+    ],
+)
+def test_are_antipodal(lat1, lon1, lat2, lon2, expected):
+    result = earth.are_antipodal(lat1, lon1, lat2, lon2)
+    assert result == expected

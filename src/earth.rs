@@ -37,7 +37,9 @@ fn convert_degrees_to_radians(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> (f6
     (lat1, lon1, lat2, lon2)
 }
 
-fn are_antipodal(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> bool {
+#[pyfunction]
+#[pyo3(signature = (lat1, lon1, lat2, lon2))]
+pub fn are_antipodal(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> bool {
     let lat_condition = lat1 == -lat2;
 
     let lon_difference = (lon1 - lon2).abs();
@@ -363,22 +365,5 @@ mod tests {
         // Test with a very small angle
         let (lat1, _, _, _) = convert_degrees_to_radians(0.0001, 0.0, 0.0, 0.0);
         assert!((lat1 - 1.7453292519943295e-6).abs() < EPSILON);
-    }
-
-    #[test]
-    fn test_antipodal_points() {
-        assert!(are_antipodal(90.0, 0.0, -90.0, 0.0));
-        assert!(are_antipodal(0.0, 0.0, 0.0, 180.0));
-        assert!(are_antipodal(45.0, 90.0, -45.0, -90.0));
-        assert!(are_antipodal(-30.0, 60.0, 30.0, -120.0));
-        assert!(are_antipodal(20.0, -50.0, -20.0, 130.0));
-        assert!(are_antipodal(-15.0, 10.0, 15.0, -170.0));
-    }
-
-    #[test]
-    fn test_non_antipodal_points() {
-        assert!(!are_antipodal(0.0, 0.0, 0.0, 0.0));
-        assert!(!are_antipodal(10.0, 10.0, 10.0, 10.0));
-        assert!(!are_antipodal(-41.12, 30.0, 23.0, -17.0));
     }
 }
