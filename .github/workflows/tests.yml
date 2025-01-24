@@ -35,4 +35,6 @@ jobs:
       - name: Setup Rust
         run: |
           rustup update
+      - name: Run Tests
+        run: |
           cargo test
