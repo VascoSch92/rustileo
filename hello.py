@@ -1,1 +1,0 @@
-from rustileo import earthimport rustileodef main():    print(rustileo.__version__)    print(rustileo.__doc__)    print(earth.RADIUS)    print(earth.bearing(0, 0, 0, 0))    print(earth.vincenty_distance(80.2828, -19.02, 29.0452, 0.9892))if __name__ == "__main__":    main()
