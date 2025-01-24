@@ -29,7 +29,6 @@ fn validate_coordinate_pair(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> Resul
     Ok(())
 }
 
-
 fn convert_degrees_to_radians(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> (f64, f64, f64, f64) {
     let lat1 = lat1.to_radians();
     let lon1 = lon1.to_radians();
@@ -109,8 +108,9 @@ pub fn vincenty_distance(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> PyResult
     let (phi1, lambda1, phi2, lambda2) = convert_degrees_to_radians(lat1, lon1, lat2, lon2);
 
     // Check if points are the same
-    if (phi1 - phi2).abs() < CONVERGENCE_THRESHOLD &&
-        (lambda1 - lambda2).abs() < CONVERGENCE_THRESHOLD {
+    if (phi1 - phi2).abs() < CONVERGENCE_THRESHOLD
+        && (lambda1 - lambda2).abs() < CONVERGENCE_THRESHOLD
+    {
         return Ok(0.0);
     }
 
@@ -133,16 +133,16 @@ pub fn vincenty_distance(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> PyResult
         let cos_lambda = lambda.cos();
 
         let temp1 = reduced_latitude2.cos() * sin_lambda;
-        let temp2 = reduced_latitude1.cos() * reduced_latitude2.sin() -
-            reduced_latitude1.sin() * reduced_latitude2.cos() * cos_lambda;
+        let temp2 = reduced_latitude1.cos() * reduced_latitude2.sin()
+            - reduced_latitude1.sin() * reduced_latitude2.cos() * cos_lambda;
         sin_sigma = (temp1 * temp1 + temp2 * temp2).sqrt();
 
         if sin_sigma.abs() < CONVERGENCE_THRESHOLD {
             return Ok(0.0); // Points are coincident
         }
 
-        cos_sigma = reduced_latitude1.sin() * reduced_latitude2.sin() +
-            reduced_latitude1.cos() * reduced_latitude2.cos() * cos_lambda;
+        cos_sigma = reduced_latitude1.sin() * reduced_latitude2.sin()
+            + reduced_latitude1.cos() * reduced_latitude2.cos() * cos_lambda;
 
         sigma = sin_sigma.atan2(cos_sigma);
 
@@ -158,19 +158,32 @@ pub fn vincenty_distance(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> PyResult
         c = FLATTENING / 16.0 * cos2_alpha * (4.0 + FLATTENING * (4.0 - 3.0 * cos2_alpha));
 
         let lambda_prev = lambda;
-        lambda = omega + (1.0 - c) * FLATTENING * sin_alpha *
-            (sigma + c * sin_sigma * (cos2_sigma_m + c * cos_sigma *
-                (-1.0 + 2.0 * cos2_sigma_m * cos2_sigma_m)));
+        lambda = omega
+            + (1.0 - c)
+                * FLATTENING
+                * sin_alpha
+                * (sigma
+                    + c * sin_sigma
+                        * (cos2_sigma_m
+                            + c * cos_sigma * (-1.0 + 2.0 * cos2_sigma_m * cos2_sigma_m)));
 
         if (lambda - lambda_prev).abs() < CONVERGENCE_THRESHOLD {
             // Calculate final distance
-            let u2 = cos2_alpha * (SEMI_MAJOR_AXIS_METER * SEMI_MAJOR_AXIS_METER - SEMI_MINOR_AXIS_METER * SEMI_MINOR_AXIS_METER) / (SEMI_MINOR_AXIS_METER * SEMI_MINOR_AXIS_METER);
+            let u2 = cos2_alpha
+                * (SEMI_MAJOR_AXIS_METER * SEMI_MAJOR_AXIS_METER
+                    - SEMI_MINOR_AXIS_METER * SEMI_MINOR_AXIS_METER)
+                / (SEMI_MINOR_AXIS_METER * SEMI_MINOR_AXIS_METER);
             let a = 1.0 + u2 / 16384.0 * (4096.0 + u2 * (-768.0 + u2 * (320.0 - 175.0 * u2)));
             let b = u2 / 1024.0 * (256.0 + u2 * (-128.0 + u2 * (74.0 - 47.0 * u2)));
-            let delta_sigma = b * sin_sigma * (cos2_sigma_m + b / 4.0 *
-                (cos_sigma * (-1.0 + 2.0 * cos2_sigma_m * cos2_sigma_m) -
-                    b / 6.0 * cos2_sigma_m * (-3.0 + 4.0 * sin_sigma * sin_sigma) *
-                        (-3.0 + 4.0 * cos2_sigma_m * cos2_sigma_m)));
+            let delta_sigma = b
+                * sin_sigma
+                * (cos2_sigma_m
+                    + b / 4.0
+                        * (cos_sigma * (-1.0 + 2.0 * cos2_sigma_m * cos2_sigma_m)
+                            - b / 6.0
+                                * cos2_sigma_m
+                                * (-3.0 + 4.0 * sin_sigma * sin_sigma)
+                                * (-3.0 + 4.0 * cos2_sigma_m * cos2_sigma_m)));
 
             let distance = SEMI_MINOR_AXIS_METER * a * (sigma - delta_sigma);
 
@@ -205,15 +218,18 @@ pub fn bearing(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> PyResult<f64> {
     Ok((initial_bearing + 360.0) % 360.0)
 }
 
-
 #[pyfunction]
 #[pyo3(signature = (lat, lon, distance, bearing))]
 pub fn destination(lat: f64, lon: f64, distance: f64, bearing: f64) -> PyResult<(f64, f64)> {
     if !(-90.0..=90.0).contains(&lat) {
-        return Err(PyValueError::new_err("Latitude must be between -90 and 90 degrees."));
+        return Err(PyValueError::new_err(
+            "Latitude must be between -90 and 90 degrees.",
+        ));
     }
     if !(-180.0..=180.0).contains(&lon) {
-        return Err(PyValueError::new_err("Longitude must be between -180 and 180 degrees."));
+        return Err(PyValueError::new_err(
+            "Longitude must be between -180 and 180 degrees.",
+        ));
     }
     if distance < 0.0 {
         return Err(PyValueError::new_err("Distance cannot be negative."));
@@ -223,15 +239,16 @@ pub fn destination(lat: f64, lon: f64, distance: f64, bearing: f64) -> PyResult<
     let bearing_rad = bearing.to_radians();
 
     // Calculate angular distance
-    let angular_distance = distance / RADIUS * 1000.0;
+    let angular_distance = distance / RADIUS;
 
     // Calculate destination point using spherical trigonometry
-    let destination_lat = (radian_lat.sin() * angular_distance.cos() +
-        radian_lat.cos() * angular_distance.sin() * bearing_rad.cos())
-        .asin();
+    let destination_lat = (radian_lat.sin() * angular_distance.cos()
+        + radian_lat.cos() * angular_distance.sin() * bearing_rad.cos())
+    .asin();
 
-    let destination_lon = radian_lon + (bearing_rad.sin() * angular_distance.sin() * radian_lat.cos())
-        .atan2(angular_distance.cos() - radian_lat.sin() * destination_lat.sin());
+    let destination_lon = radian_lon
+        + (bearing_rad.sin() * angular_distance.sin() * radian_lat.cos())
+            .atan2(angular_distance.cos() - radian_lat.sin() * destination_lat.sin());
 
     // Convert back to degrees and normalize
     let destination_lat_deg = destination_lat.to_degrees();
@@ -247,7 +264,7 @@ pub fn destination(lat: f64, lon: f64, distance: f64, bearing: f64) -> PyResult<
 mod tests {
     use super::*;
     use std::f64::consts::PI;
-    const EPSILON: f64 = 1e-3;  // For floating point comparisons
+    const EPSILON: f64 = 1e-3; // For floating point comparisons
 
     #[test]
     fn test_valid_coordinate_pair() {
@@ -292,37 +309,37 @@ mod tests {
     #[test]
     fn test_90_degree_conversion() {
         let (lat1, lon1, lat2, lon2) = convert_degrees_to_radians(90.0, 90.0, 90.0, 90.0);
-        assert!((lat1 - PI/2.0).abs() < EPSILON);
-        assert!((lon1 - PI/2.0).abs() < EPSILON);
-        assert!((lat2 - PI/2.0).abs() < EPSILON);
-        assert!((lon2 - PI/2.0).abs() < EPSILON);
+        assert!((lat1 - PI / 2.0).abs() < EPSILON);
+        assert!((lon1 - PI / 2.0).abs() < EPSILON);
+        assert!((lat2 - PI / 2.0).abs() < EPSILON);
+        assert!((lon2 - PI / 2.0).abs() < EPSILON);
     }
 
     #[test]
     fn test_negative_angles() {
         let (lat1, lon1, lat2, lon2) = convert_degrees_to_radians(-45.0, -180.0, -90.0, -30.0);
-        assert!((lat1 - (-PI/4.0)).abs() < EPSILON);
+        assert!((lat1 - (-PI / 4.0)).abs() < EPSILON);
         assert!((lon1 - (-PI)).abs() < EPSILON);
-        assert!((lat2 - (-PI/2.0)).abs() < EPSILON);
-        assert!((lon2 - (-PI/6.0)).abs() < EPSILON);
+        assert!((lat2 - (-PI / 2.0)).abs() < EPSILON);
+        assert!((lon2 - (-PI / 6.0)).abs() < EPSILON);
     }
 
     #[test]
     fn test_mixed_angles() {
         let (lat1, lon1, lat2, lon2) = convert_degrees_to_radians(45.0, -120.0, -30.0, 150.0);
-        assert!((lat1 - PI/4.0).abs() < EPSILON);
-        assert!((lon1 - (-2.0*PI/3.0)).abs() < EPSILON);
-        assert!((lat2 - (-PI/6.0)).abs() < EPSILON);
-        assert!((lon2 - (5.0*PI/6.0)).abs() < EPSILON);
+        assert!((lat1 - PI / 4.0).abs() < EPSILON);
+        assert!((lon1 - (-2.0 * PI / 3.0)).abs() < EPSILON);
+        assert!((lat2 - (-PI / 6.0)).abs() < EPSILON);
+        assert!((lon2 - (5.0 * PI / 6.0)).abs() < EPSILON);
     }
 
     #[test]
     fn test_full_circle() {
         let (lat1, lon1, lat2, lon2) = convert_degrees_to_radians(360.0, 360.0, 720.0, -360.0);
-        assert!((lat1 - 2.0*PI).abs() < EPSILON);
-        assert!((lon1 - 2.0*PI).abs() < EPSILON);
-        assert!((lat2 - 4.0*PI).abs() < EPSILON);
-        assert!((lon2 - (-2.0*PI)).abs() < EPSILON);
+        assert!((lat1 - 2.0 * PI).abs() < EPSILON);
+        assert!((lon1 - 2.0 * PI).abs() < EPSILON);
+        assert!((lat2 - 4.0 * PI).abs() < EPSILON);
+        assert!((lon2 - (-2.0 * PI)).abs() < EPSILON);
     }
 
     #[test]

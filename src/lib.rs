@@ -5,6 +5,7 @@ use std::path::Path;
 use pyo3::prelude::*;
 use toml::Value;
 
+#[allow(unused_imports)]
 use earth::{
     bearing, destination, great_circle_distance, haversine_distance, tunnel_distance,
     vincenty_distance, CIRCUMFERENCE as EARTH_CIRCUMFERENCE, FLATTENING as EARTH_FLATTENING,
@@ -58,7 +59,6 @@ fn rustileo(py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
     earth.add_function(wrap_pyfunction!(vincenty_distance, py)?)?;
     earth.add_function(wrap_pyfunction!(bearing, py)?)?;
     earth.add_function(wrap_pyfunction!(destination, py)?)?;
-
 
     m.add_submodule(&earth)?;
 

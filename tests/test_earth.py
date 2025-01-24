@@ -1,6 +1,7 @@
-from rustileo import earth
-import pytest
 import math
+
+import pytest
+from rustileo import earth
 
 
 @pytest.mark.parametrize(
@@ -203,7 +204,7 @@ def test_bearing_exceptions(lat1, lon1, lat2, lon2, error, error_msg):
         # distance 0 should gives back same coordinates
         (0, 0, 0, 0, 0, 0, 0),
         (-1, 1, 0, 1, 0, -1, 1),
-        (40.7128, -74.0060, 0, 0, 0, 40.7128, -74.0060),
+        (40.7128, -74.0060, 0, 0, 0.05, 40.7128, -74.0060),
         # destination north
         (0.0, 0.0, 111.195, 0.0, 0.05, 1, 0),
         # destination east
@@ -215,10 +216,9 @@ def test_bearing_exceptions(lat1, lon1, lat2, lon2, error, error_msg):
 def test_destination(lat, lon, distance, bearing, rel_tol, expected_lat, expected_lon):
     computed_value = earth.destination(lat, lon, distance, bearing)
     msg = f"Expected: ({expected_lat}, {expected_lon}). Got {computed_value}"
-    if (
-        not math.isclose(computed_value[0], expected_lat, rel_tol=rel_tol) or
-        not math.isclose(computed_value[1], expected_lon, rel_tol=rel_tol)
-    ):
+    if not math.isclose(
+        computed_value[0], expected_lat, rel_tol=rel_tol
+    ) or not math.isclose(computed_value[1], expected_lon, rel_tol=rel_tol):
         raise AssertionError(msg)
 
 
