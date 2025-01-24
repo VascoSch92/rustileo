@@ -9,7 +9,7 @@ permissions:
   checks: write
 
 jobs:
-  tests-suite-by-version:
+  python-tests-suite-by-version:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -27,3 +27,12 @@ jobs:
       - name: Run tests
         run: |
           make test
+  rust-tests-suite:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Rust
+        run: |
+          rustup update
+          cargo test
