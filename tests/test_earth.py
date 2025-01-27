@@ -44,17 +44,10 @@ def test_tunnel_distance(lat1, lon1, lat2, lon2, rel_tol, expected_value):
 @pytest.mark.parametrize(
     argnames="lat1, lon1, lat2, lon2, error, error_msg",
     argvalues=[
-        (-91, 0, 0, 0, ValueError, "Latitude 1 must be between -90 and 90 degrees."),
-        (0, 181, 0, 0, ValueError, "Longitude 1 must be between -180 and 180 degrees."),
-        (0, 0, 91, 0, ValueError, "Latitude 2 must be between -90 and 90 degrees."),
-        (
-            0,
-            0,
-            0,
-            -181,
-            ValueError,
-            "Longitude 2 must be between -180 and 180 degrees.",
-        ),
+        (-91, 0, 0, 0, ValueError, "Latitude must be between -90 and 90 degrees."),
+        (0, 181, 0, 0, ValueError, "Longitude must be between -180 and 180 degrees."),
+        (0, 0, 91, 0, ValueError, "Latitude must be between -90 and 90 degrees."),
+        (0, 0, 0, -181, ValueError, "Longitude must be between -180 and 180 degrees."),
     ],
 )
 def test_tunnel_distance_exceptions(lat1, lon1, lat2, lon2, error, error_msg):
@@ -90,17 +83,10 @@ def test_haversine_and_great_circle_distance(lat1, lon1, lat2, lon2, rel_tol, ex
 @pytest.mark.parametrize(
     argnames="lat1, lon1, lat2, lon2, error, error_msg",
     argvalues=[
-        (-91, 0, 0, 0, ValueError, "Latitude 1 must be between -90 and 90 degrees."),
-        (0, 181, 0, 0, ValueError, "Longitude 1 must be between -180 and 180 degrees."),
-        (0, 0, 91, 0, ValueError, "Latitude 2 must be between -90 and 90 degrees."),
-        (
-            0,
-            0,
-            0,
-            -181,
-            ValueError,
-            "Longitude 2 must be between -180 and 180 degrees.",
-        ),
+        (-91, 0, 0, 0, ValueError, "Latitude must be between -90 and 90 degrees."),
+        (0, 181, 0, 0, ValueError, "Longitude must be between -180 and 180 degrees."),
+        (0, 0, 91, 0, ValueError, "Latitude must be between -90 and 90 degrees."),
+        (0, 0, 0, -181, ValueError, "Longitude must be between -180 and 180 degrees."),
     ],
 )
 def test_haversine_distance_exceptions(lat1, lon1, lat2, lon2, error, error_msg):
@@ -140,17 +126,10 @@ def test_vincenty_distance(lat1, lon1, lat2, lon2, rel_tol, expected_value):
 @pytest.mark.parametrize(
     argnames="lat1, lon1, lat2, lon2, error, error_msg",
     argvalues=[
-        (-91, 0, 0, 0, ValueError, "Latitude 1 must be between -90 and 90 degrees."),
-        (0, 181, 0, 0, ValueError, "Longitude 1 must be between -180 and 180 degrees."),
-        (0, 0, 91, 0, ValueError, "Latitude 2 must be between -90 and 90 degrees."),
-        (
-            0,
-            0,
-            0,
-            -181,
-            ValueError,
-            "Longitude 2 must be between -180 and 180 degrees.",
-        ),
+        (-91, 0, 0, 0, ValueError, "Latitude must be between -90 and 90 degrees."),
+        (0, 181, 0, 0, ValueError, "Longitude must be between -180 and 180 degrees."),
+        (0, 0, 91, 0, ValueError, "Latitude must be between -90 and 90 degrees."),
+        (0, 0, 0, -181, ValueError, "Longitude must be between -180 and 180 degrees."),
     ],
 )
 def test_vincenty_distance_exceptions(lat1, lon1, lat2, lon2, error, error_msg):
@@ -182,17 +161,10 @@ def test_bearing(lat1, lon1, lat2, lon2, rel_tol, expected_value):
 @pytest.mark.parametrize(
     argnames="lat1, lon1, lat2, lon2, error, error_msg",
     argvalues=[
-        (-91, 0, 0, 0, ValueError, "Latitude 1 must be between -90 and 90 degrees."),
-        (0, 181, 0, 0, ValueError, "Longitude 1 must be between -180 and 180 degrees."),
-        (0, 0, 91, 0, ValueError, "Latitude 2 must be between -90 and 90 degrees."),
-        (
-            0,
-            0,
-            0,
-            -181,
-            ValueError,
-            "Longitude 2 must be between -180 and 180 degrees.",
-        ),
+        (-91, 0, 0, 0, ValueError, "Latitude must be between -90 and 90 degrees."),
+        (0, 181, 0, 0, ValueError, "Longitude must be between -180 and 180 degrees."),
+        (0, 0, 91, 0, ValueError, "Latitude must be between -90 and 90 degrees."),
+        (0, 0, 0, -181, ValueError, "Longitude must be between -180 and 180 degrees."),
     ],
 )
 def test_bearing_exceptions(lat1, lon1, lat2, lon2, error, error_msg):
