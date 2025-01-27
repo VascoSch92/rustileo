@@ -1,15 +1,17 @@
 #[allow(unused_imports)]
 use pyo3::prelude::*;
 
-#[allow(unused_imports)]
-use earth::{
-    are_antipodal, bearing, destination, great_circle_distance, haversine_distance,
-    tunnel_distance, vincenty_distance, CIRCUMFERENCE as EARTH_CIRCUMFERENCE,
-    FLATTENING as EARTH_FLATTENING, RADIUS as EARTH_RADIUS,
+mod earth;
+
+use crate::earth::constants::{
+    CIRCUMFERENCE as EARTH_CIRCUMFERENCE, FLATTENING as EARTH_FLATTENING, RADIUS as EARTH_RADIUS,
     SEMI_MAJOR_AXIS as EARTH_SEMI_MAJOR_AXIS, SEMI_MINOR_AXIS as EARTH_SEMI_MINOR_AXIS,
 };
-
-mod earth;
+#[allow(unused_imports)]
+use crate::earth::interface::{
+    are_antipodal, bearing, destination, great_circle_distance, haversine_distance,
+    tunnel_distance, vincenty_distance,
+};
 
 /// A Python module implemented in Rust.
 #[pymodule]

@@ -52,6 +52,7 @@ fastbuild:
 	@uv pip uninstall rustileo
 	@echo "[INFO] Clean uv cache"
 	@uv cache clean
+	@make init-dev
 	@echo "[INFO] Run test"
 	@uv run pytest .
 

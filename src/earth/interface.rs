@@ -1,40 +1,29 @@
+use crate::earth::coordinates::Coordinate;
 use pyo3::exceptions::PyValueError;
 #[allow(unused_imports)]
 use pyo3::prelude::*;
 use pyo3::{pyfunction, PyResult};
 
-pub const RADIUS: f64 = 6371.0; // km
-pub const CIRCUMFERENCE: f64 = 40075.0; // km
-pub const SEMI_MAJOR_AXIS: f64 = 6378.137; // km
-pub const SEMI_MINOR_AXIS: f64 = 6_356.752_4; // km
-pub const FLATTENING: f64 = 1.0 / 298.257_23;
+use crate::earth::constants::{
+    CIRCUMFERENCE, FLATTENING, RADIUS, SEMI_MAJOR_AXIS, SEMI_MINOR_AXIS,
+};
 
-fn validate_coordinate_pair(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> Result<(), String> {
-    let latitude_range = -90.0..=90.0;
-    let longitude_range = -180.0..=180.0;
+fn validate_coordinate_pair(
+    lat1: f64,
+    lon1: f64,
+    lat2: f64,
+    lon2: f64,
+) -> Result<(Coordinate, Coordinate), String> {
+    let coordinate_1 = Coordinate::new(lat1, lon1);
+    let coordinate_2 = Coordinate::new(lat2, lon2);
 
-    if !latitude_range.contains(&lat1) {
-        return Err("Latitude 1 must be between -90 and 90 degrees.".to_string());
-    }
-    if !longitude_range.contains(&lon1) {
-        return Err("Longitude 1 must be between -180 and 180 degrees.".to_string());
-    }
-    if !latitude_range.contains(&lat2) {
-        return Err("Latitude 2 must be between -90 and 90 degrees.".to_string());
-    }
-    if !longitude_range.contains(&lon2) {
-        return Err("Longitude 2 must be between -180 and 180 degrees.".to_string());
+    if coordinate_1.is_err() {
+        return Err(coordinate_1.err().unwrap());
+    } else if coordinate_2.is_err() {
+        return Err(coordinate_2.err().unwrap());
     }
 
-    Ok(())
-}
-
-fn convert_degrees_to_radians(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> (f64, f64, f64, f64) {
-    let lat1 = lat1.to_radians();
-    let lon1 = lon1.to_radians();
-    let lat2 = lat2.to_radians();
-    let lon2 = lon2.to_radians();
-    (lat1, lon1, lat2, lon2)
+    Ok((coordinate_1.unwrap(), coordinate_2.unwrap()))
 }
 
 #[pyfunction]
@@ -51,20 +40,14 @@ pub fn are_antipodal(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> bool {
 #[pyfunction]
 #[pyo3(signature = (lat1, lon1, lat2, lon2))]
 pub fn tunnel_distance(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> PyResult<f64> {
-    if let Err(msg) = validate_coordinate_pair(lat1, lon1, lat2, lon2) {
-        return Err(PyValueError::new_err(msg));
+    let coordinates = validate_coordinate_pair(lat1, lon1, lat2, lon2);
+    if coordinates.is_err() {
+        return Err(PyValueError::new_err(coordinates.err().unwrap()));
     }
 
-    let (lat1, lon1, lat2, lon2) = convert_degrees_to_radians(lat1, lon1, lat2, lon2);
-
-    // Convert to Cartesian coordinates
-    let x1 = RADIUS * lat1.cos() * lon1.cos();
-    let y1 = RADIUS * lat1.cos() * lon1.sin();
-    let z1 = RADIUS * lat1.sin();
-
-    let x2 = RADIUS * lat2.cos() * lon2.cos();
-    let y2 = RADIUS * lat2.cos() * lon2.sin();
-    let z2 = RADIUS * lat2.sin();
+    let (coordinate_1, coordinate_2) = coordinates.unwrap();
+    let (x1, y1, z1) = coordinate_1.in_cartesian();
+    let (x2, y2, z2) = coordinate_2.in_cartesian();
 
     // Calculate Euclidean distance
     let dx = x2 - x1;
@@ -83,11 +66,14 @@ pub fn great_circle_distance(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> PyRe
 #[pyfunction]
 #[pyo3(signature = (lat1, lon1, lat2, lon2))]
 pub fn haversine_distance(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> PyResult<f64> {
-    if let Err(msg) = validate_coordinate_pair(lat1, lon1, lat2, lon2) {
-        return Err(PyValueError::new_err(msg));
+    let coordinates = validate_coordinate_pair(lat1, lon1, lat2, lon2);
+    if coordinates.is_err() {
+        return Err(PyValueError::new_err(coordinates.err().unwrap()));
     }
 
-    let (lat1, lon1, lat2, lon2) = convert_degrees_to_radians(lat1, lon1, lat2, lon2);
+    let (coordinate_1, coordinate_2) = coordinates.unwrap();
+    let (lat1, lon1) = coordinate_1.in_radians();
+    let (lat2, lon2) = coordinate_2.in_radians();
 
     // Haversine formula
     let d_lat = lat2 - lat1;
@@ -95,34 +81,30 @@ pub fn haversine_distance(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> PyResul
 
     let a = (d_lat / 2.0).sin().powi(2) + lat1.cos() * lat2.cos() * (d_lon / 2.0).sin().powi(2);
 
-    let c = 2.0 * a.sqrt().asin();
-
     // Calculate the distance
-    let distance = RADIUS * c;
-
-    Ok(distance)
+    Ok(RADIUS * 2.0 * a.sqrt().asin())
 }
 
 #[pyfunction]
 #[pyo3(signature = (lat1, lon1, lat2, lon2))]
 pub fn vincenty_distance(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> PyResult<f64> {
-    if let Err(msg) = validate_coordinate_pair(lat1, lon1, lat2, lon2) {
-        return Err(PyValueError::new_err(msg));
-    }
     const CONVERGENCE_THRESHOLD: f64 = 1e-8;
-    if (lat1 - lat2).abs() < CONVERGENCE_THRESHOLD && (lon1 - lon2).abs() < CONVERGENCE_THRESHOLD {
+    const MAX_ITERATIONS: i32 = 1_000;
+
+    let coordinates = validate_coordinate_pair(lat1, lon1, lat2, lon2);
+    if coordinates.is_err() {
+        return Err(PyValueError::new_err(coordinates.err().unwrap()));
+    } else if (lat1 - lat2).abs() < CONVERGENCE_THRESHOLD
+        && (lon1 - lon2).abs() < CONVERGENCE_THRESHOLD
+    {
         return Ok(0.0);
-    }
-    if are_antipodal(lat1, lon1, lat2, lon2) {
+    } else if are_antipodal(lat1, lon1, lat2, lon2) {
         return Ok(0.5 * CIRCUMFERENCE);
     }
 
-    // WGS-84 ellipsoidal constants
-    const SEMI_MAJOR_AXIS_METER: f64 = SEMI_MAJOR_AXIS * 1000.0; // semi-major axis in meters
-    const SEMI_MINOR_AXIS_METER: f64 = SEMI_MINOR_AXIS * 1000.0; // semi-minor axis in meters
-    const MAX_ITERATIONS: i32 = 1_000;
-
-    let (phi1, lambda1, phi2, lambda2) = convert_degrees_to_radians(lat1, lon1, lat2, lon2);
+    let (coordinate_1, coordinate_2) = coordinates.unwrap();
+    let (phi1, lambda1) = coordinate_1.in_radians();
+    let (phi2, lambda2) = coordinate_2.in_radians();
 
     let reduced_latitude1 = ((1.0 - FLATTENING) * phi1.tan()).atan();
     let reduced_latitude2 = ((1.0 - FLATTENING) * phi2.tan()).atan();
@@ -179,10 +161,8 @@ pub fn vincenty_distance(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> PyResult
 
         if (lambda - lambda_prev).abs() < CONVERGENCE_THRESHOLD {
             // Calculate final distance
-            let u2 = cos2_alpha
-                * (SEMI_MAJOR_AXIS_METER * SEMI_MAJOR_AXIS_METER
-                    - SEMI_MINOR_AXIS_METER * SEMI_MINOR_AXIS_METER)
-                / (SEMI_MINOR_AXIS_METER * SEMI_MINOR_AXIS_METER);
+            let u2 = cos2_alpha * (SEMI_MAJOR_AXIS.powi(2) - SEMI_MINOR_AXIS.powi(2))
+                / SEMI_MINOR_AXIS.powi(2);
             let a = 1.0 + u2 / 16384.0 * (4096.0 + u2 * (-768.0 + u2 * (320.0 - 175.0 * u2)));
             let b = u2 / 1024.0 * (256.0 + u2 * (-128.0 + u2 * (74.0 - 47.0 * u2)));
             let delta_sigma = b
@@ -195,10 +175,7 @@ pub fn vincenty_distance(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> PyResult
                                 * (-3.0 + 4.0 * sin_sigma * sin_sigma)
                                 * (-3.0 + 4.0 * cos2_sigma_m * cos2_sigma_m)));
 
-            let distance = SEMI_MINOR_AXIS_METER * a * (sigma - delta_sigma);
-
-            // Convert to kilometers and return
-            return Ok(distance / 1000.0);
+            return Ok(SEMI_MINOR_AXIS * a * (sigma - delta_sigma));
         }
     }
 
@@ -209,11 +186,14 @@ pub fn vincenty_distance(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> PyResult
 #[pyfunction]
 #[pyo3(signature = (lat1, lon1, lat2, lon2))]
 pub fn bearing(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> PyResult<f64> {
-    if let Err(msg) = validate_coordinate_pair(lat1, lon1, lat2, lon2) {
-        return Err(PyValueError::new_err(msg));
+    let coordinates = validate_coordinate_pair(lat1, lon1, lat2, lon2);
+    if coordinates.is_err() {
+        return Err(PyValueError::new_err(coordinates.err().unwrap()));
     }
 
-    let (lat1, lon1, lat2, lon2) = convert_degrees_to_radians(lat1, lon1, lat2, lon2);
+    let (coordinate_1, coordinate_2) = coordinates.unwrap();
+    let (lat1, lon1) = coordinate_1.in_radians();
+    let (lat2, lon2) = coordinate_2.in_radians();
 
     // Calculate difference in longitudes
     let delta_lon = lon2 - lon1;
@@ -231,21 +211,16 @@ pub fn bearing(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> PyResult<f64> {
 #[pyfunction]
 #[pyo3(signature = (lat, lon, distance, bearing))]
 pub fn destination(lat: f64, lon: f64, distance: f64, bearing: f64) -> PyResult<(f64, f64)> {
-    if !(-90.0..=90.0).contains(&lat) {
-        return Err(PyValueError::new_err(
-            "Latitude must be between -90 and 90 degrees.",
-        ));
-    }
-    if !(-180.0..=180.0).contains(&lon) {
-        return Err(PyValueError::new_err(
-            "Longitude must be between -180 and 180 degrees.",
-        ));
+    let coordinate = Coordinate::new(lat, lon);
+
+    if coordinate.is_err() {
+        return Err(PyValueError::new_err(coordinate.err().unwrap()));
     }
     if distance < 0.0 {
         return Err(PyValueError::new_err("Distance cannot be negative."));
     }
 
-    let (radian_lat, radian_lon, _, _) = convert_degrees_to_radians(lat, lon, 0.0, 0.0);
+    let (radian_lat, radian_lon) = coordinate.unwrap().in_radians();
     let bearing_rad = bearing.to_radians();
 
     // Calculate angular distance
@@ -305,65 +280,5 @@ mod tests {
     fn test_invalid_longitude2() {
         assert!(validate_coordinate_pair(40.7128, -74.0060, 51.5074, 200.0).is_err());
         assert!(validate_coordinate_pair(40.7128, -74.0060, 51.5074, -200.0).is_err());
-    }
-
-    #[test]
-    fn test_zero_conversion() {
-        let (lat1, lon1, lat2, lon2) = convert_degrees_to_radians(0.0, 0.0, 0.0, 0.0);
-        assert!(lat1.abs() < EPSILON);
-        assert!(lon1.abs() < EPSILON);
-        assert!(lat2.abs() < EPSILON);
-        assert!(lon2.abs() < EPSILON);
-    }
-
-    #[test]
-    fn test_90_degree_conversion() {
-        let (lat1, lon1, lat2, lon2) = convert_degrees_to_radians(90.0, 90.0, 90.0, 90.0);
-        assert!((lat1 - PI / 2.0).abs() < EPSILON);
-        assert!((lon1 - PI / 2.0).abs() < EPSILON);
-        assert!((lat2 - PI / 2.0).abs() < EPSILON);
-        assert!((lon2 - PI / 2.0).abs() < EPSILON);
-    }
-
-    #[test]
-    fn test_negative_angles() {
-        let (lat1, lon1, lat2, lon2) = convert_degrees_to_radians(-45.0, -180.0, -90.0, -30.0);
-        assert!((lat1 - (-PI / 4.0)).abs() < EPSILON);
-        assert!((lon1 - (-PI)).abs() < EPSILON);
-        assert!((lat2 - (-PI / 2.0)).abs() < EPSILON);
-        assert!((lon2 - (-PI / 6.0)).abs() < EPSILON);
-    }
-
-    #[test]
-    fn test_mixed_angles() {
-        let (lat1, lon1, lat2, lon2) = convert_degrees_to_radians(45.0, -120.0, -30.0, 150.0);
-        assert!((lat1 - PI / 4.0).abs() < EPSILON);
-        assert!((lon1 - (-2.0 * PI / 3.0)).abs() < EPSILON);
-        assert!((lat2 - (-PI / 6.0)).abs() < EPSILON);
-        assert!((lon2 - (5.0 * PI / 6.0)).abs() < EPSILON);
-    }
-
-    #[test]
-    fn test_full_circle() {
-        let (lat1, lon1, lat2, lon2) = convert_degrees_to_radians(360.0, 360.0, 720.0, -360.0);
-        assert!((lat1 - 2.0 * PI).abs() < EPSILON);
-        assert!((lon1 - 2.0 * PI).abs() < EPSILON);
-        assert!((lat2 - 4.0 * PI).abs() < EPSILON);
-        assert!((lon2 - (-2.0 * PI)).abs() < EPSILON);
-    }
-
-    #[test]
-    fn test_common_coordinates() {
-        // Test with New York coordinates (approximately)
-        let (lat1, lon1, _, _) = convert_degrees_to_radians(40.7128, -74.0060, 0.0, 0.0);
-        assert!((lat1 - 0.7099).abs() < EPSILON);
-        assert!((lon1 - (-1.2916)).abs() < EPSILON);
-    }
-
-    #[test]
-    fn test_precision() {
-        // Test with a very small angle
-        let (lat1, _, _, _) = convert_degrees_to_radians(0.0001, 0.0, 0.0, 0.0);
-        assert!((lat1 - 1.7453292519943295e-6).abs() < EPSILON);
     }
 }
